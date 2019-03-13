@@ -1,7 +1,11 @@
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const nodeExternals = require('webpack-node-externals');
+
+const isNode = process.argv.indexOf('--node') !== -1;
 
 module.exports = {
+  target: isNode ? 'node' : 'web',
   entry: ['babel-polyfill', './src/index.ts'],
   output: {
     filename: '[name].bundle.js',
@@ -21,19 +25,23 @@ module.exports = {
     ],
   },
 
+  externals: [isNode ? nodeExternals() : null].filter((p) => !!p),
+
   resolve: {
-    extensions: ['.ts', '.js'],
+    extensions: ['.ts', '.js', '.tsx'],
   },
 
   mode: process.env.NODE_ENV !== 'production' ? 'development' : 'production',
 
   plugins: [
-    new HtmlWebpackPlugin({
-      template: './index.tpl.html',
-    }),
+    !isNode
+      ? new HtmlWebpackPlugin({
+          template: './index.tpl.html',
+        })
+      : null,
 
     new webpack.DefinePlugin({
       __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'),
     }),
-  ],
+  ].filter((p) => !!p),
 };
